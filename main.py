@@ -73,6 +73,7 @@ class Record:
     def add_phone(self, phone:str):                                                                           
         if not self.find_phone(phone):
             self.phones.append(Phone(phone))
+        else: raise ValueError(f"Contact {self.name} already has phone number {phone}")
             
     def remove_phone(self, phone:str):  
         phone_for_remove = self.find_phone(phone)                                                                              
@@ -111,7 +112,9 @@ def input_error(func):
         except IndexError:
            return "Enter the argument for the command."
         except KeyError:
-            return "No such contact in the list."        
+            return "No such contact in the list."
+        except TypeError as e:
+            return print(f"Error: {e}")
     return inner
 
 @input_error
@@ -122,33 +125,42 @@ def parse_input(user_input):
 
 @input_error
 def add_contact(address_book, name, phone):
-    existing_contact = address_book.find(name)
-    if existing_contact:
-        existing_contact.add_phone(phone)
-        for name, record in address_book.data.items():
-            print(f"key: {name}: value {record}")
-    else:
-        record = Record(name)
-        record.add_phone(phone)
-        address_book.add_record(record)
-        for name, record in address_book.data.items():
-            print(f"key: {name}: value {record}")
+    try:
+        existing_contact = address_book.find(name)
+        if existing_contact:
+            existing_contact.add_phone(phone)
+            for name, record in address_book.data.items():
+                print(f"key: {name}: value {record}")
+        else:
+            record = Record(name)
+            record.add_phone(phone)
+            address_book.add_record(record)
+            for name, record in address_book.data.items():
+                print(f"key: {name}: value {record}")
+    except ValueError as e:
+        print(f"Error: {e}")
 
 @input_error
 def change_phone(address_book, name, old_phone, new_phone):
-    existing_contact = address_book.find(name)
-    if existing_contact:
-        existing_contact.edit_phone(old_phone, new_phone)
-    else:
-        print(f"{name} contact is not in the address book")
+    try:
+        existing_contact = address_book.find(name)
+        if existing_contact:
+            existing_contact.edit_phone(old_phone, new_phone)
+        else:
+            print(f"{name} contact is not in the address book")
+    except ValueError as e:
+        print(f"Error: {e}")
 
 @input_error
 def add_birthday(address_book, name, birthday):
-    existing_contact = address_book.find(name)
-    if existing_contact:
-        existing_contact.add_birthday(birthday)
-    else:
-        print(f"{name} contact is not in the address book")
+    try:
+        existing_contact = address_book.find(name)
+        if existing_contact:
+            existing_contact.add_birthday(birthday)
+        else:
+            print(f"{name} contact is not in the address book")
+    except ValueError as e:
+        print(f"Error: {e}")
 
 @input_error
 def show_birthday(address_book, name):
@@ -162,15 +174,19 @@ def show_birthday(address_book, name):
 def show_phone(address_book, name):
     existing_contact = address_book.find(name)
     if existing_contact:
+        width = max(len(existing_contact.name.value),4) + 2
+        header = '{:<{w}}|{:<10}'.format('Name','Phone',w = width)
+        separator = '-' * width + '|' + '-' * 10
+        print(header,separator,sep = '\n')
         for phone in existing_contact.phones:
-            print(f"Name: {existing_contact.name.value}, contact data: {phone.value}")
+            print('{:<{w}}|{:<10}'.format(existing_contact.name.value,phone.value,w = width))
     else:
         print (f"{name} contact is not in the address book")
 
 @input_error
 def display_contacts(address_book):
     for name, record in address_book.data.items():
-        print(f"Name: {name}, contact data: {record}")
+        print(record)
 
 @input_error
 def show_birthdays(address_book):
@@ -209,7 +225,7 @@ def main():
             add_contact(book, *args)
         elif command == "change":
             change_phone(book, *args)
-        elif command == "adb":
+        elif command == "add-birthday":
             add_birthday(book, *args)
         elif command == "show-birthday":
             show_birthday(book, *args)
